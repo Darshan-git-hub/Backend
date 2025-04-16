@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 
 // Import the User model
-const User = require('./models/User');
+const User = require('./User');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
