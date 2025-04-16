@@ -1,11 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const path = require('path');
 
-// Import the User model
-const User = require('./User');
+// Import the User model (if needed, but we'll remove all user-related logic)
+const User = require('./User'); // Can be removed if not used in future functionality
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,73 +32,6 @@ const automobileSchema = new mongoose.Schema({
 });
 const Automobile = mongoose.model('Automobile', automobileSchema);
 
-// Authentication Middleware
-const auth = (req, res, next) => {
-  const token = req.header('x-auth-token');
-  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
-
-  try {
-    const decoded = jwt.verify(token, 'your_jwt_secret');
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ message: 'Token is not valid' });
-  }
-};
-
-// Auth Routes
-app.post('/api/auth/signup', async (req, res) => {
-  const { name, email, password, consumer_number, address } = req.body;
-
-  try {
-    // Check if a user with the same email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists' });
-    }
-
-    // Create a new user
-    const user = new User({
-      name,
-      email,
-      password, // Password is stored as a number (not secure)
-      consumer_number,
-      address
-    });
-    await user.save();
-    console.log(`User ${email} created successfully`);
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.post('/api/auth/signin', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Compare password (direct comparison since password is a number)
-    if (user.password !== password) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
-    console.log(`User ${email} signed in successfully`);
-    res.json({ token });
-  } catch (error) {
-    console.error('Signin error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
 // Automobile Routes
 app.get('/api/automobiles', async (req, res) => {
   try {
@@ -111,7 +43,7 @@ app.get('/api/automobiles', async (req, res) => {
   }
 });
 
-app.post('/api/automobiles', auth, async (req, res) => {
+app.post('/api/automobiles', async (req, res) => { // Removed auth middleware
   try {
     const automobile = new Automobile(req.body);
     await automobile.save();
@@ -122,7 +54,7 @@ app.post('/api/automobiles', auth, async (req, res) => {
   }
 });
 
-app.put('/api/automobiles/:id', auth, async (req, res) => {
+app.put('/api/automobiles/:id', async (req, res) => { // Removed auth middleware
   try {
     const automobile = await Automobile.findByIdAndUpdate(req.params.id, req.body, { 
       new: true, 
@@ -136,7 +68,7 @@ app.put('/api/automobiles/:id', auth, async (req, res) => {
   }
 });
 
-app.delete('/api/automobiles/:id', auth, async (req, res) => {
+app.delete('/api/automobiles/:id', async (req, res) => { // Removed auth middleware
   try {
     const automobile = await Automobile.findByIdAndDelete(req.params.id);
     if (!automobile) return res.status(404).send();
